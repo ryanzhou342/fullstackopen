@@ -20,8 +20,8 @@ const App = () => {
     setSelected(randomInt);
   }
 
-  const votesCopy = [...votes];
   const handleVote = () => {
+    const votesCopy = [...votes];
     votesCopy[selected] += 1;
     setVotes(votesCopy);
   }
@@ -39,7 +39,7 @@ const App = () => {
         {anecdotes[selected]}
       </p>
       <p>
-        {votesCopy[selected]}
+        {votes[selected]}
       </p>
       <div>
         <button onClick={handleRandom}>next anecdote</button>
