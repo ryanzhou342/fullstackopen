@@ -33,7 +33,7 @@ const App = () => {
       if (person.name === personObject.name) {
         if (window.confirm(`${person.name} is already added to phonebook, replace the old number with the new one?`)) {
           axios
-            .put(`http://localhost:3001/persons/${person.id}`, { ...person, number: newNumber })
+            .put(`http://localhost:3001/api/persons/${person.id}`, { ...person, number: newNumber })
             .then(response => {
               setPersons(persons.map(p => p.name !== newName ? p : response.data));
             })
@@ -60,7 +60,7 @@ const App = () => {
 
   const deletePerson = (id) => {
     if (window.confirm()) {
-      axios.delete(`http://localhost:3001/persons/${id}`);
+      axios.delete(`http://localhost:3001/api/persons/${id}`);
       setPersons(persons.filter(person => person.id !== id));
     }
   }
