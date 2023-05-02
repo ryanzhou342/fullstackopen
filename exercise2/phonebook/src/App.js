@@ -13,6 +13,7 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [addedMessage, setAddedMessage] = useState(null);
+  const [errorCheck, setErrorCheck] = useState(null);
 
   useEffect(() => {
     personService
@@ -50,11 +51,16 @@ const App = () => {
       .then(createdPerson => {
         setPersons(persons.concat(createdPerson));
         setAddedMessage(`Added ${createdPerson.name}`);
+        setErrorCheck(false);
         setTimeout(() => {
           setAddedMessage(null)
         }, 5000)
         setNewName("");
         setNewNumber("");
+      })
+      .catch(error => {
+        setAddedMessage(error.response.data.error);
+        setErrorCheck(true);
       })
   }
 
@@ -84,7 +90,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
-      <Notification message={addedMessage} />
+      <Notification message={addedMessage} error={errorCheck} />
       <Filter searchTerm={searchTerm} handleSearchChange={handleSearchChange} />
       <h3>Add a new</h3>
       <PersonForm newName={newName} newNumber={newNumber} addPerson={addPerson} handleNameChange={handleNameChange} handleNumberChange={handleNumberChange} />
