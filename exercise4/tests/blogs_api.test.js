@@ -3,6 +3,7 @@ const app = require("../app");
 const mongoose = require("mongoose");
 const api = supertest(app);
 const Blog = require("../models/blog");
+const User = require("../../part3/models/user");
 
 const initialBlogs = [
   {
@@ -89,4 +90,45 @@ test("url or title missing", async () => {
     .post("/api/blogs")
     .send(newBlog)
     .expect(400);
+});
+
+test("a blog can be deleted", async () => {
+  let blogs = await Blog.find({});
+  const blogsAtStart = blogs.map(blog => blog.toJSON());
+  const blogToDelete = blogsAtStart[0];
+
+  await api
+    .delete(`/api/blogs/${blogToDelete.id}`)
+    .expect(204);
+
+  blogs = await Blog.find({});
+  const blogsAtEnd = blogs.map(blog => blog.toJSON());
+  
+  expect(blogsAtEnd).toHaveLength(blogsAtStart.length - 1);
+
+  const titles = blogsAtEnd.map(blog => blog.title);
+  expect(titles).not.toContain(blogToDelete.title);
+});
+
+test("a blog can be updated", async () => {
+  let blogs = await Blog.find({});
+  const blogsAtStart = blogs.map(blog => blog.toJSON());
+  const blogToUpdate = blogsAtStart[0];
+
+  const updatedBlog = {
+    title: blogToUpdate.title,
+    author: blogToUpdate.author,
+    url: blogToUpdate.url,
+    likes: 4
+  };
+
+  console.log(updatedBlog);
+  await api
+    .put(`/api/blogs/${blogToUpdate.id}`)
+    .send(updatedBlog)
+    .expect(200);
+
+  blogs = await Blog.find({});
+  const blogsAtEnd = blogs.map(blog => blog.toJSON());
+  expect(blogs[0].likes).toBe(4);
 });
