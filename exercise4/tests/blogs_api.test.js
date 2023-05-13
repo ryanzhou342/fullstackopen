@@ -3,7 +3,9 @@ const app = require("../app");
 const mongoose = require("mongoose");
 const api = supertest(app);
 const Blog = require("../models/blog");
-const User = require("../../part3/models/user");
+const User = require("../models/user");
+const helper = require("./test_helper");
+const bcrypt = require("bcrypt");
 
 const initialBlogs = [
   {
@@ -73,6 +75,7 @@ test("likes defaults to 0", async () => {
 
 test("url or title missing", async () => {
   let newBlog = {
+    title: undefined,
     author: "4",
     url: "4",
     likes: 5
@@ -122,7 +125,6 @@ test("a blog can be updated", async () => {
     likes: 4
   };
 
-  console.log(updatedBlog);
   await api
     .put(`/api/blogs/${blogToUpdate.id}`)
     .send(updatedBlog)
@@ -131,4 +133,81 @@ test("a blog can be updated", async () => {
   blogs = await Blog.find({});
   const blogsAtEnd = blogs.map(blog => blog.toJSON());
   expect(blogs[0].likes).toBe(4);
+});
+
+describe("when there is initially one user in db", () => {
+  beforeEach(async () => {
+    await User.deleteMany({});
+
+    const passwordHash = await bcrypt.hash("ryan", 10);
+    const user = new User({
+      username: "ryan",
+      passwordHash
+    });
+
+    await user.save();
+  });
+
+  test("creation fails with proper statuscode and message if username is already taken", async () => {
+    const usersAtStart = await helper.usersInDb();
+
+    const newUser = {
+      username: "ryan",
+      name: "ryan",
+      password: "ryan"
+    };
+
+    const result = await api
+      .post("/api/users")
+      .send(newUser)
+      .expect(400)
+      .expect("Content-Type", /application\/json/);
+
+    expect(result.body.error).toContain("expected `username` to be unique");
+
+    const usersAtEnd = await helper.usersInDb();
+    expect(usersAtEnd).toEqual(usersAtStart);
+  });
+
+  test("creation fails with proper statuscode if password is less than 3", async () => {
+    const usersAtStart = await helper.usersInDb();
+
+    const newUser = {
+      username: "wontwork",
+      name: "wontwork",
+      password: "12"
+    };
+
+    const result = await api
+      .post("/api/users")
+      .send(newUser)
+      .expect(400)
+      .expect("Content-Type", /application\/json/);
+
+    expect(result.body.error).toBe("password must be of at least length 3");
+
+    const usersAtEnd = await helper.usersInDb();
+    expect(usersAtEnd).toEqual(usersAtStart);
+  });
+
+  test("creation fails with proper statuscode if username is less than 3", async () => {
+    const usersAtStart = await helper.usersInDb();
+
+    const newUser = {
+      username: "1",
+      name: "wontwork",
+      password: "1234"
+    };
+
+    const result = await api
+      .post("/api/users")
+      .send(newUser)
+      .expect(400)
+      .expect("Content-Type", /application\/json/);
+    
+    expect(result.body.error).toContain("shorter than the minimum allowed length");
+
+    const usersAtEnd = await helper.usersInDb();
+    expect(usersAtEnd).toEqual(usersAtStart);
+  });
 });
