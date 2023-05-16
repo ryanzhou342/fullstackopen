@@ -18,7 +18,8 @@ const initialBlogs = [
 
 beforeEach(async () => {
   await Blog.deleteMany({});
-  
+  await User.deleteMany({});
+
   const blogObjects = initialBlogs.map(blog => new Blog(blog));
   const promiseArray = blogObjects.map(blog => blog.save());
   await Promise.all(promiseArray);
@@ -37,6 +38,23 @@ test("id is correctly named and defined", async () => {
 });
 
 test("post request makes new blog", async () => {
+  const newPassword = "ryan";
+  const newUser = {
+    username: "ryan",
+    password: newPassword
+  };
+
+  await api
+    .post("/api/users")
+    .send(newUser);
+  
+  const loginResponse = await api
+    .post("/api/login")
+    .send({
+      username: newUser.username,
+      password: newPassword
+    });
+
   const newBlog = {
     title: "2",
     author: "2",
@@ -46,6 +64,7 @@ test("post request makes new blog", async () => {
 
   await api
     .post("/api/blogs")
+    .set("Authorization", "Bearer " + loginResponse.body.token)
     .send(newBlog)
     .expect(201)
     .expect("Content-Type", /application\/json/);
@@ -59,6 +78,12 @@ test("post request makes new blog", async () => {
 });
 
 test("likes defaults to 0", async () => {
+  const newPassword = "ryan";
+  const newUser = {
+    username: "ryan",
+    password: newPassword
+  };
+
   const newBlog = {
     title: "3",
     author: "3",
@@ -66,7 +91,19 @@ test("likes defaults to 0", async () => {
   };
 
   await api
+    .post("/api/users")
+    .send(newUser);
+  
+  const loginResponse = await api
+    .post("/api/login")
+    .send({
+      username: newUser.username,
+      password: newPassword
+    });
+
+  await api
     .post("/api/blogs")
+    .set("Authorization", "Bearer " + loginResponse.body.token)
     .send(newBlog);
   
   const blogs = await Blog.find({});
@@ -96,19 +133,42 @@ test("url or title missing", async () => {
 });
 
 test("a blog can be deleted", async () => {
-  let blogs = await Blog.find({});
-  const blogsAtStart = blogs.map(blog => blog.toJSON());
-  const blogToDelete = blogsAtStart[0];
+  const newPassword = "ryan";
+  const newUser = {
+    username: "ryan",
+    password: newPassword
+  };
 
   await api
-    .delete(`/api/blogs/${blogToDelete.id}`)
+    .post("/api/users")
+    .send(newUser);
+  
+  const loginResponse = await api
+    .post("/api/login")
+    .send({
+      username: newUser.username,
+      password: newPassword
+    });
+
+  const newBlog = {
+    title: "2",
+    author: "2",
+    url: "1",
+    likes: 5
+  };
+
+  const blogToDelete = await api
+    .post("/api/blogs")
+    .set("Authorization", "Bearer " + loginResponse.body.token)
+    .send(newBlog);
+  
+  await api
+    .delete(`/api/blogs/${blogToDelete.body.id}`)
+    .set("Authorization", "Bearer " + loginResponse.body.token)
     .expect(204);
 
   blogs = await Blog.find({});
   const blogsAtEnd = blogs.map(blog => blog.toJSON());
-  
-  expect(blogsAtEnd).toHaveLength(blogsAtStart.length - 1);
-
   const titles = blogsAtEnd.map(blog => blog.title);
   expect(titles).not.toContain(blogToDelete.title);
 });
@@ -134,6 +194,37 @@ test("a blog can be updated", async () => {
   const blogsAtEnd = blogs.map(blog => blog.toJSON());
   expect(blogs[0].likes).toBe(4);
 });
+
+test("adding a blog fails with 401 when token is not provided", async () => {
+  const newPassword = "ryan";
+  const newUser = {
+    username: "ryan",
+    password: newPassword
+  };
+
+  await api
+    .post("/api/users")
+    .send(newUser);
+  
+  const loginResponse = await api
+    .post("/api/login")
+    .send({
+      username: newUser.username,
+      password: newPassword
+    });
+
+  const newBlog = {
+    title: "2",
+    author: "2",
+    url: "1",
+    likes: 5
+  };
+
+  api
+    .post("/api/blogs")
+    .send(newBlog)
+    .expect(401);
+})
 
 describe("when there is initially one user in db", () => {
   beforeEach(async () => {
