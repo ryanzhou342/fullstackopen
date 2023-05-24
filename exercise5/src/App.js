@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Blog from './components/Blog';
 import blogService from './services/blogs';
 import loginService from "./services/login";
+import Notification from "./components/Notification";
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
@@ -13,6 +14,7 @@ const App = () => {
     author: "",
     url: ""
   });
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     blogService.getAll().then(blogs => {
@@ -32,18 +34,25 @@ const App = () => {
   const handleLogin = async (event) => {
     event.preventDefault();
     
-    const user = await loginService.login({
-      username, password
-    });
-
-    window.localStorage.setItem(
-      "loggedBlogappUser", JSON.stringify(user)
-    );
-
-    setUser(user);
-    blogService.setToken(user.token);
-    setUsername("");
-    setPassword("");
+    try {
+      const user = await loginService.login({
+        username, password
+      });
+  
+      window.localStorage.setItem(
+        "loggedBlogappUser", JSON.stringify(user)
+      );
+  
+      setUser(user);
+      blogService.setToken(user.token);
+      setUsername("");
+      setPassword("");
+    } catch (e) {
+      setMessage("Wrong username or password");
+      setTimeout(() => {
+        setMessage(null);
+      }, 5000);
+    }
   };
 
   const handleLogout = async (event) => {
@@ -63,12 +72,17 @@ const App = () => {
       author: "",
       url: ""
     });
+    setMessage(`a new blog ${newBlog.title} by ${newBlog.author} added`);
+    setTimeout(() => {
+      setMessage(null);
+    }, 5000);
   };
 
   if (user === null) {
     return (
       <div>
         <h2>Login</h2>
+        <Notification message={message} />
         <form onSubmit={handleLogin}>
           <div>
             username
@@ -87,6 +101,7 @@ const App = () => {
   return (
     <div>
       <h2>blogs</h2>
+      <Notification message={message} />
       <p>{user.name} logged in</p>
       <button type="submit" onClick={handleLogout}>logout</button>
 
