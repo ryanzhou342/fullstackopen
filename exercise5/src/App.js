@@ -13,7 +13,7 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [message, setMessage] = useState("");
   const blogFormRef = useRef();
-
+  console.log("rendered");
   useEffect(() => {
     blogService.getAll().then(blogs => {
       setBlogs(blogs)
@@ -60,14 +60,25 @@ const App = () => {
     setUser(null);
   };
 
+  const handleLikes = async (event, currentLikes, id) => {
+    event.preventDefault();
+    
+    const blog = blogs.find(blog => blog.id === id);
+    const updatedBlog = {...blog, likes: blog.likes + 1, user: blog.user.id};
+    await blogService.put(id, updatedBlog);
+    const newBlogs = await blogService.getAll();
+    setBlogs(newBlogs);
+  };
+
   const createBlog = async (newBlog) => {
     blogFormRef.current.toggleVisibility();
-    const createdBlog = await blogService.create(newBlog);
-    setBlogs(blogs.concat(createdBlog));
+    await blogService.create(newBlog);
+    const newBlogs = await blogService.getAll()
+    setBlogs(newBlogs);
     setMessage(`a new blog ${newBlog.title} by ${newBlog.author} added`);
     setTimeout(() => {
       setMessage(null);
-    }, 5000)
+    }, 5000);
   };
 
   if (user === null) {
@@ -99,9 +110,9 @@ const App = () => {
       <Togglable buttonLabel="new blog" ref={blogFormRef}>
         <BlogForm createBlog={createBlog} />
       </Togglable>
-      {blogs.map(blog =>
-        <Blog key={blog.id} blog={blog} />
-      )}
+      {blogs.sort((blog1, blog2) => (blog2.likes - blog1.likes)).map(blog => {
+        return (<Blog key={blog.id} blog={blog} handleLikes={handleLikes} setBlogs={setBlogs} />);
+      })}
     </div>
   )
 }
