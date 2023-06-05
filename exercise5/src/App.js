@@ -1,13 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
-import Blog from './components/Blog';
-import blogService from './services/blogs';
+import { useState, useEffect, useRef } from "react";
+import Blog from "./components/Blog";
+import blogService from "./services/blogs";
 import loginService from "./services/login";
 import Notification from "./components/Notification";
 import BlogForm from "./components/BlogForm";
 import Togglable from "./components/Togglable";
 
 const App = () => {
-  const [blogs, setBlogs] = useState([])
+  const [blogs, setBlogs] = useState([]);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [user, setUser] = useState(null);
@@ -16,8 +16,8 @@ const App = () => {
   console.log("rendered");
   useEffect(() => {
     blogService.getAll().then(blogs => {
-      setBlogs(blogs)
-    }); 
+      setBlogs(blogs);
+    });
   }, []);
 
   useEffect(() => {
@@ -31,16 +31,16 @@ const App = () => {
 
   const handleLogin = async (event) => {
     event.preventDefault();
-    
+
     try {
       const user = await loginService.login({
         username, password
       });
-  
+
       window.localStorage.setItem(
         "loggedBlogappUser", JSON.stringify(user)
       );
-  
+
       setUser(user);
       blogService.setToken(user.token);
       setUsername("");
@@ -62,9 +62,9 @@ const App = () => {
 
   const handleLikes = async (event, currentLikes, id) => {
     event.preventDefault();
-    
+
     const blog = blogs.find(blog => blog.id === id);
-    const updatedBlog = {...blog, likes: blog.likes + 1, user: blog.user.id};
+    const updatedBlog = { ...blog, likes: blog.likes + 1, user: blog.user.id };
     await blogService.put(id, updatedBlog);
     const newBlogs = await blogService.getAll();
     setBlogs(newBlogs);
@@ -73,7 +73,7 @@ const App = () => {
   const createBlog = async (newBlog) => {
     blogFormRef.current.toggleVisibility();
     await blogService.create(newBlog);
-    const newBlogs = await blogService.getAll()
+    const newBlogs = await blogService.getAll();
     setBlogs(newBlogs);
     setMessage(`a new blog ${newBlog.title} by ${newBlog.author} added`);
     setTimeout(() => {
@@ -89,16 +89,16 @@ const App = () => {
         <form onSubmit={handleLogin}>
           <div>
             username
-              <input type="text" value={username} name="Username" onChange={({ target }) => setUsername(target.value)}/>
+            <input type="text" value={username} name="Username" onChange={({ target }) => setUsername(target.value)}/>
           </div>
           <div>
             password
-              <input type="password" value={password} name="Password" onChange={({ target }) => setPassword(target.value)}/>
+            <input type="password" value={password} name="Password" onChange={({ target }) => setPassword(target.value)}/>
           </div>
           <button type="submit">login</button>
         </form>
       </div>
-    )
+    );
   }
 
   return (
@@ -114,7 +114,7 @@ const App = () => {
         return (<Blog key={blog.id} blog={blog} handleLikes={handleLikes} setBlogs={setBlogs} />);
       })}
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;
