@@ -17,8 +17,7 @@ const Blog = ({ blog, handleLikes, setBlogs }) => {
   if (!visible) {
     return (
       <div style={blogStyle} className="defaultBlog">
-        <span>{blog.title}</span>
-        <span>{blog.author}</span>
+        {`${blog.title} ${blog.author}`}
         <button onClick={() => {setVisible(!visible);}}>show</button>
       </div>
     );
@@ -36,10 +35,7 @@ const Blog = ({ blog, handleLikes, setBlogs }) => {
     <div style={blogStyle} className="detailedBlog">
       <div>
         <span>
-          {blog.title}
-        </span>
-        <span>
-          {blog.author}
+          {`${blog.title} ${blog.author}`}
         </span>
         <button onClick={() => {setVisible(!visible);}}>hide</button>
       </div>
