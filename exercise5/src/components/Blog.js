@@ -26,9 +26,11 @@ const Blog = ({ blog, handleLikes, setBlogs }) => {
   const handleDelete = async (event) => {
     event.preventDefault();
 
-    await blogService.remove(blog.id);
-    const updatedBlogs = await blogService.getAll();
-    setBlogs(updatedBlogs);
+    if (window.confirm("Delete blog " + blog.title + " by " + blog.author)) {
+      await blogService.remove(blog.id);
+      const updatedBlogs = await blogService.getAll();
+      setBlogs(updatedBlogs);
+    }
   };
 
   return (
@@ -40,13 +42,13 @@ const Blog = ({ blog, handleLikes, setBlogs }) => {
         <button onClick={() => {setVisible(!visible);}}>hide</button>
       </div>
       <div>{blog.url}</div>
-      <div>
+      <div data-cy="likes">
         {blog.likes}
         <button onClick={(event) => handleLikes(event, blog.likes, blog.id)}>like</button>
       </div>
       <div>{blog.user.name}</div>
       <div>
-        <button onClick={handleDelete}>delete</button>
+        {blog.user.username === JSON.parse(window.localStorage.getItem("loggedBlogappUser")).username && <button onClick={handleDelete}>delete</button>}
       </div>
     </div>
   );
